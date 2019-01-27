@@ -295,7 +295,7 @@ class RasoloWishCompare {
         if(!is_array($list_of_cmpr_id)){
             $this->error_msg='Icorrect output cmpr data';
             $this->error_code=256;
-            return false;
+            return;
         };
         $local_pure_numeric=array_filter($list_of_cmpr_id,'is_numeric');
         $this->cmpr_ids=$local_pure_numeric;
@@ -327,12 +327,12 @@ class RasoloWishCompare {
         if(!is_numeric($some_cmpr_id)){
             $this->error_msg='The input compare item is not numeric';
             $this->error_code=271;
-            return false;
+            return;
         };
         if(!in_array($some_cmpr_id,$this->cmpr_ids)){
             $this->error_msg='The input compare item is not in array so far';
             $this->error_code=272;
-            return false;
+            return;
         };
         $this->last_rmvd_cmpr_key=array_search($some_cmpr_id,$this->cmpr_ids);
         unset($this->cmpr_ids[intval($this->last_rmvd_cmpr_key)]);
