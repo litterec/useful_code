@@ -39,6 +39,10 @@ class RasoloWishCompare {
     private $error_code;
     private $already_read_meta;
     private $already_read_cookies;
+    private $last_added_wish_key;
+    private $last_added_cmpr_key;
+    private $last_rmvd_wish_key;
+    private $last_rmvd_cmpr_key;
 
     function __construct(){
 
@@ -48,6 +52,10 @@ class RasoloWishCompare {
         $this->error_msg= '';
         $this->already_read_meta=false;
         $this->already_read_cookies=false;
+        $this->last_added_wish_key=false;
+        $this->last_added_cmpr_key=false;
+        $this->last_rmvd_wish_key=false;
+        $this->last_rmvd_cmpr_key=false;
 
         if($this_user=get_current_user_id()){
             $this->read_user_meta($this_user);
@@ -61,7 +69,7 @@ class RasoloWishCompare {
         if(!is_array($array_for_cookie)){
             $this->error_msg='The input data for cookies is not an array';
             $this->error_code=264;
-            return false;
+            return;
         };
 
         $string_for_cookie=urlencode(json_encode($array_for_cookie));
@@ -73,19 +81,19 @@ class RasoloWishCompare {
 //            }
 
         setcookie(self::$COOKIE_KEY,$string_for_cookie,$exp_time,'/');
-        return true;
+        return;
     }
 
     private function write_user_meta($usr,$array_for_meta){
         $usr_meta_data_ser=serialize($array_for_meta);
         update_user_meta( $usr, self::$META_KEY, $usr_meta_data_ser );
-        return true;
+        return;
     }
 
     private function read_user_meta($some_user){
 
         if($this->already_read_meta){
-            return false;
+            return;
         };
         $this->already_read_meta=true;
         $this->error_code=false;
@@ -126,19 +134,12 @@ class RasoloWishCompare {
             $this->error_code=243;
         };
 
-        if($this->error_code){
-            return false;
-        } else {
-            $this->error_msg='';
-            $this->error_code=false;
-            return true;
-        }
     }
 
     private function read_user_cookie(){
 
         if($this->already_read_cookies){
-            return false;
+            return;
         };
         $this->already_read_cookies=true;
 
@@ -190,13 +191,6 @@ class RasoloWishCompare {
             $this->error_code=245;
         };
 
-        if($this->error_code){
-            return false;
-        } else {
-            $this->error_msg='';
-            $this->error_code=false;
-            return true;
-        }
     }
 
     private function clear_user_meta(){
@@ -219,44 +213,44 @@ class RasoloWishCompare {
         if(!is_numeric($new_wish_id)){
             $this->error_msg='Incorrect new wish item type';
             $this->error_code=403;
-            return false;
+            return;
         };
         if(in_array($new_wish_id,$this->wish_ids)){
             $this->error_msg='The item is already in the wish list';
             $this->error_code=404;
-            return false;
+            return;
         };
         if(count($this->wish_ids)+1>self::$WISH_MAX_SIZE){
             $this->error_msg='The wish ids memory area capacity is exceeded';
             $this->error_code=405;
-            return false;
+            return;
 
         };
         $this->wish_ids[]=intval($new_wish_id);
         end($this->wish_ids);
-        return key($this->wish_ids);
+        $this->last_added_wish_key=key($this->wish_ids);
     }
 
     public function add_cmpr($new_cmpr_id){
         if(!is_numeric($new_cmpr_id)){
             $this->error_msg='Incorrect new cmpr item type';
             $this->error_code=407;
-            return false;
+            return;
         };
         if(in_array($new_cmpr_id,$this->cmpr_ids)){
             $this->error_msg='The item is already in the cmpr list';
             $this->error_code=408;
-            return false;
+            return;
         };
         if(count($this->cmpr_ids)+1>self::$CMPR_MAX_SIZE){
             $this->error_msg='The cmpr ids memory area capacity is exceeded';
             $this->error_code=409;
-            return false;
+            return;
 
         };
         $this->cmpr_ids[]=intval($new_cmpr_id);
         end($this->cmpr_ids);
-        return key($this->cmpr_ids);
+        $this->last_added_cmpr_key = key($this->cmpr_ids);
     }
 
     public function write_wish(){  // this shit was in parameters $list_of_wish_id=array()
@@ -266,14 +260,14 @@ class RasoloWishCompare {
         } else {
             $this->write_user_cookie(array('wish_ids'=>$this->wish_ids,'cmpr_ids'=>$this->cmpr_ids));
         };
-        return true;
+
 //        };
 /*  This is shit!s
 
         if(!is_array($list_of_wish_id)){
             $this->error_msg='Icorrect output wish data';
             $this->error_code=255;
-            return false;
+            return;
         };
         $local_pure_numeric=array_filter($list_of_wish_id,'is_numeric');
 
@@ -283,7 +277,6 @@ class RasoloWishCompare {
         } else {
             $this->write_user_cookie(array('wish_ids'=>$local_pure_numeric,'cmpr_ids'=>$this->cmpr_ids));
         };
-        return true;
 
 */
     }
@@ -296,7 +289,6 @@ class RasoloWishCompare {
         } else {
             $this->write_user_cookie(array('wish_ids'=>$this->wish_ids,'cmpr_ids'=>$this->cmpr_ids));
         };
-        return true;
 //        };
 
 /*  This is the shit too
@@ -320,16 +312,15 @@ class RasoloWishCompare {
         if(!is_numeric($some_wish_id)){
             $this->error_msg='The input wish item is not numeric';
             $this->error_code=273;
-            return false;
+            return;
         };
         if(!in_array($some_wish_id,$this->wish_ids)){
             $this->error_msg='The input wish item is not in array so far';
             $this->error_code=274;
-            return false;
+            return;
         };
-        $doomed_key=array_search($some_wish_id,$this->wish_ids);
-        unset($this->wish_ids[intval($doomed_key)]);
-        return $doomed_key;
+        $this->last_rmvd_wish_key=array_search($some_wish_id,$this->wish_ids);
+        unset($this->wish_ids[intval($this->last_rmvd_wish_key)]);
     }
 
     public function remove_cmpr($some_cmpr_id){
@@ -343,9 +334,8 @@ class RasoloWishCompare {
             $this->error_code=272;
             return false;
         };
-        $doomed_key=array_search($some_cmpr_id,$this->cmpr_ids);
-        unset($this->cmpr_ids[intval($doomed_key)]);
-        return $doomed_key;
+        $this->last_rmvd_cmpr_key=array_search($some_cmpr_id,$this->cmpr_ids);
+        unset($this->cmpr_ids[intval($this->last_rmvd_cmpr_key)]);
     }
     public function in_wish_list($some_wish_id){
         return in_array($some_wish_id,$this->wish_ids);
