@@ -35,8 +35,10 @@ class RasoloWishCompare {
 
     private $wish_ids;
     private $cmpr_ids;
-    private $error_msg=false;
-    private $error_code=false;
+    private $error_msg;
+    private $error_code;
+    private $already_read_meta;
+    private $already_read_cookies;
 
     function __construct(){
 
@@ -44,6 +46,8 @@ class RasoloWishCompare {
         $this->cmpr_ids= array();
         $this->error_code= false;
         $this->error_msg= '';
+        $this->already_read_meta=false;
+        $this->already_read_cookies=false;
 
         if($this_user=get_current_user_id()){
             $this->read_user_meta($this_user);
@@ -80,6 +84,10 @@ class RasoloWishCompare {
 
     private function read_user_meta($some_user){
 
+        if($this->already_read_meta){
+            return false;
+        };
+        $this->already_read_meta=true;
         $this->error_code=false;
         $usr_meta_ser=get_user_meta( $some_user, self::$META_KEY, true );
 
@@ -99,7 +107,7 @@ class RasoloWishCompare {
         } else {
             $this->clear_user_meta();
             $this->wish_ids=array();
-            $this->error_msg='Wish ids is absent in the user meta:'.$usr_meta_ser.'{==';
+            $this->error_msg='Wish ids are absent in the user meta:'.$usr_meta_ser.'{==';
             $this->error_code=242;
         };
         if(isset($this_user_meta['cmpr_ids'])){
@@ -114,7 +122,7 @@ class RasoloWishCompare {
         } else {
             $this->clear_user_meta();
             $this->cmpr_ids=array();
-            $this->error_msg='Compare ids is absent in the user meta:'.$usr_meta_ser.'{===';
+            $this->error_msg='Compare ids are absent in the user meta:'.$usr_meta_ser.'{===';
             $this->error_code=243;
         };
 
@@ -128,6 +136,13 @@ class RasoloWishCompare {
     }
 
     private function read_user_cookie(){
+
+        if($this->already_read_cookies){
+            return false;
+        };
+        $this->already_read_cookies=true;
+
+
         $this->error_code=false;
         if(isset($_COOKIE[self::$COOKIE_KEY])){
 
@@ -153,7 +168,7 @@ class RasoloWishCompare {
                 };
             } else {
                 $this->wish_ids=array();
-                $this->error_msg='The wish ids data is absent in the user cookies';
+                $this->error_msg='The wish ids data are absent in the user cookies';
                 $this->error_code=244;
             };
             if(isset($wishlist_local['cmpr_ids'])){
@@ -167,7 +182,7 @@ class RasoloWishCompare {
             } else {
                 $this->cmpr_ids=array();
                 $this->error_msg='The compare ids data is absent in the user cookies';
-                $this->error_code=244;
+                $this->error_code=247;
             };
 
         } else {
