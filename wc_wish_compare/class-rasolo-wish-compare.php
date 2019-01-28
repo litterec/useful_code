@@ -35,8 +35,7 @@ class RasoloWishCompare {
 
     private $wish_ids;
     private $cmpr_ids;
-    private $error_msg;
-    private $error_code;
+    private $error;
     private $already_read_meta;
     private $already_read_cookies;
     private $last_added_wish_key;
@@ -48,8 +47,7 @@ class RasoloWishCompare {
 
         $this->wish_ids= array();
         $this->cmpr_ids= array();
-        $this->error_code= false;
-        $this->error_msg= '';
+        $this->error= array();
         $this->already_read_meta=false;
         $this->already_read_cookies=false;
         $this->last_added_wish_key=false;
@@ -67,8 +65,7 @@ class RasoloWishCompare {
 
     private function write_user_cookie($array_for_cookie){
         if(!is_array($array_for_cookie)){
-            $this->error_msg='The input data for cookies is not an array';
-            $this->error_code=264;
+            $this->error[264]='The input data for cookies is not an array';
             return;
         };
 
@@ -96,7 +93,6 @@ class RasoloWishCompare {
             return;
         };
         $this->already_read_meta=true;
-        $this->error_code=false;
         $usr_meta_ser=get_user_meta( $some_user, self::$META_KEY, true );
 
         $usr_wishcompare_meta=stripslashes($usr_meta_ser);
@@ -108,15 +104,13 @@ class RasoloWishCompare {
                 $this->wish_ids=array_filter($this_user_meta['wish_ids'],'is_numeric');
             } else {
                 $this->wish_ids=array();
-                $this->error_msg='The source meta wish data is corrupt!';
-                $this->error_code=401;
+                $this->error[401]='The source meta wish data is corrupt!';
             };
 
         } else {
             $this->clear_user_meta();
             $this->wish_ids=array();
-            $this->error_msg='Wish ids are absent in the user meta:'.$usr_meta_ser.'{==';
-            $this->error_code=242;
+            $this->error[242]='Wish ids are absent in the user meta:'.$usr_meta_ser.'{==';
         };
         if(isset($this_user_meta['cmpr_ids'])){
             if(is_array($this_user_meta['wish_ids'])){
@@ -124,14 +118,12 @@ class RasoloWishCompare {
             } else {
                 $this->clear_user_meta();
                 $this->wish_ids=array();
-                $this->error_msg='The source meta cmpr data is corrupt!';
-                $this->error_code=401;
+                $this->error[401]='The source meta cmpr data is corrupt!';
             };
         } else {
             $this->clear_user_meta();
             $this->cmpr_ids=array();
-            $this->error_msg='Compare ids are absent in the user meta:'.$usr_meta_ser.'{===';
-            $this->error_code=243;
+            $this->error[243]='Compare ids are absent in the user meta:'.$usr_meta_ser.'{===';
         };
 
     }
@@ -143,8 +135,6 @@ class RasoloWishCompare {
         };
         $this->already_read_cookies=true;
 
-
-        $this->error_code=false;
         if(isset($_COOKIE[self::$COOKIE_KEY])){
 
 //            echo '$_COOKIE[WHOLESALE_COOKIE_KEY]='.$_COOKIE[self::$COOKIE_KEY].'{==';
@@ -164,31 +154,27 @@ class RasoloWishCompare {
 
                 } else {
                     $this->wish_ids=array();
-                    $this->error_msg='The source cookie wish data is corrupt!';
-                    $this->error_code=299;
+                    $this->error[299]='The source cookie wish data is corrupt!';
                 };
             } else {
                 $this->wish_ids=array();
-                $this->error_msg='The wish ids data are absent in the user cookies';
-                $this->error_code=244;
+                $this->error[244]='The wish ids data are absent in the user cookies';
             };
             if(isset($wishlist_local['cmpr_ids'])){
                 if(is_array($wishlist_local['cmpr_ids'])){
                     $this->cmpr_ids=array_map('intval',$wishlist_local['cmpr_ids']);
                 } else {
                     $this->cmpr_ids=array();
-                    $this->error_msg='The source cookie cmpr data is corrupt!';
-                    $this->error_code=299;
+                    $this->error[299]='The source cookie cmpr data is corrupt!';
+
                 };
             } else {
                 $this->cmpr_ids=array();
-                $this->error_msg='The compare ids data is absent in the user cookies';
-                $this->error_code=247;
+                $this->error[247]='The compare ids data is absent in the user cookies';
             };
 
         } else {
-            $this->error_msg='Ids data is absent in the user cookies';
-            $this->error_code=245;
+            $this->error[245]='Ids data is absent in the user cookies';
         };
 
     }
@@ -202,8 +188,7 @@ class RasoloWishCompare {
 
 //            delete_user_meta( $this_doomed_user, self::$META_KEY );
         } else {
-            $this->error_msg='There was an attempt to clear meta while user is logged out';
-            $this->error_code=40092;
+            $this->error[40092]='There was an attempt to clear meta while user is logged out';
         };
 
 
@@ -211,18 +196,15 @@ class RasoloWishCompare {
 
     public function add_wish($new_wish_id){
         if(!is_numeric($new_wish_id)){
-            $this->error_msg='Incorrect new wish item type';
-            $this->error_code=403;
+            $this->error[403]='Incorrect new wish item type';
             return;
         };
         if(in_array($new_wish_id,$this->wish_ids)){
-            $this->error_msg='The item is already in the wish list';
-            $this->error_code=404;
+            $this->error[404]='The item is already in the wish list';
             return;
         };
         if(count($this->wish_ids)+1>self::$WISH_MAX_SIZE){
-            $this->error_msg='The wish ids memory area capacity is exceeded';
-            $this->error_code=405;
+            $this->error[405]='The wish ids memory area capacity is exceeded';
             return;
 
         };
@@ -233,18 +215,15 @@ class RasoloWishCompare {
 
     public function add_cmpr($new_cmpr_id){
         if(!is_numeric($new_cmpr_id)){
-            $this->error_msg='Incorrect new cmpr item type';
-            $this->error_code=407;
+            $this->error[407]='Incorrect new cmpr item type';
             return;
         };
         if(in_array($new_cmpr_id,$this->cmpr_ids)){
-            $this->error_msg='The item is already in the cmpr list';
-            $this->error_code=408;
+            $this->error[408]='The item is already in the cmpr list';
             return;
         };
         if(count($this->cmpr_ids)+1>self::$CMPR_MAX_SIZE){
-            $this->error_msg='The cmpr ids memory area capacity is exceeded';
-            $this->error_code=409;
+            $this->error[409]='The cmpr ids memory area capacity is exceeded';
             return;
 
         };
@@ -265,8 +244,7 @@ class RasoloWishCompare {
 /*  This is shit!s
 
         if(!is_array($list_of_wish_id)){
-            $this->error_msg='Icorrect output wish data';
-            $this->error_code=255;
+            $this->error[255]='Icorrect output wish data';
             return;
         };
         $local_pure_numeric=array_filter($list_of_wish_id,'is_numeric');
@@ -293,8 +271,7 @@ class RasoloWishCompare {
 
 /*  This is the shit too
         if(!is_array($list_of_cmpr_id)){
-            $this->error_msg='Icorrect output cmpr data';
-            $this->error_code=256;
+            $this->error[256]='Icorrect output cmpr data';
             return;
         };
         $local_pure_numeric=array_filter($list_of_cmpr_id,'is_numeric');
@@ -310,13 +287,11 @@ class RasoloWishCompare {
 
     public function remove_wish($some_wish_id){
         if(!is_numeric($some_wish_id)){
-            $this->error_msg='The input wish item is not numeric';
-            $this->error_code=273;
+            $this->error[273]='The input wish item is not numeric';
             return;
         };
         if(!in_array($some_wish_id,$this->wish_ids)){
-            $this->error_msg='The input wish item is not in array so far';
-            $this->error_code=274;
+            $this->error[274]='The input wish item is not in array so far';
             return;
         };
         $this->last_rmvd_wish_key=array_search($some_wish_id,$this->wish_ids);
@@ -325,13 +300,11 @@ class RasoloWishCompare {
 
     public function remove_cmpr($some_cmpr_id){
         if(!is_numeric($some_cmpr_id)){
-            $this->error_msg='The input compare item is not numeric';
-            $this->error_code=271;
+            $this->error[271]='The input compare item is not numeric';
             return;
         };
         if(!in_array($some_cmpr_id,$this->cmpr_ids)){
-            $this->error_msg='The input compare item is not in array so far';
-            $this->error_code=272;
+            $this->error[272]='The input compare item is not in array so far';
             return;
         };
         $this->last_rmvd_cmpr_key=array_search($some_cmpr_id,$this->cmpr_ids);
@@ -349,11 +322,11 @@ class RasoloWishCompare {
     public function get_cmpr(){
         return $this->cmpr_ids;
     }
-    public function get_error_msg(){
-        return $this->error_msg;
+    public function how_many_errors(){
+        return count($this->error);
     }
-    public function get_error_code(){
-        return $this->error_code;
+    public function get_errors(){
+        return $this->error;
     }
 
 }
